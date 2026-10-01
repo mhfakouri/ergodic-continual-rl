@@ -7,8 +7,6 @@ from environments.learned_transform_env import (
 
 def main():
 
-    # Use log(x) as a known transformation so we can
-    # verify the environment mechanics exactly.
     transform = np.log
 
     env = LearnedTransformCoinTossEnv(
@@ -17,45 +15,82 @@ def main():
         episode_length=100,
     )
 
-    obs0, info0 = env.reset(seed=42)
+    obs0, info0 = env.reset(
+        seed=42
+    )
 
-    # Normalized action 0 -> bet fraction F = 0.5
+    # a = 0 -> F = 0.5
     action = np.array(
         [0.0],
         dtype=np.float32,
     )
 
-    obs1, reward, terminated, truncated, info1 = env.step(
-        action
-    )
+    (
+        obs1,
+        reward,
+        terminated,
+        truncated,
+        info1,
+    ) = env.step(action)
 
-    expected_obs0 = np.log(100.0)
+    expected_obs0 = 0.0
 
     expected_obs1 = np.log(
         info1["wealth"]
+        / 100.0
     )
 
-    expected_reward = (
-        expected_obs1
-        - expected_obs0
+    expected_reward = np.log(
+        info1["wealth"]
+    ) - np.log(
+        100.0
     )
 
     print("=" * 60)
     print("LEARNED-TRANSFORM ENVIRONMENT TEST")
     print("=" * 60)
 
-    print("Initial wealth:", info0["wealth"])
-    print("Initial observation:", obs0)
+    print(
+        "Initial wealth:",
+        info0["wealth"],
+    )
+
+    print(
+        "Initial observation:",
+        obs0,
+    )
 
     print()
-    print("New wealth:", info1["wealth"])
-    print("Bet fraction:", info1["bet_fraction"])
-    print("New observation:", obs1)
-    print("Reward:", reward)
+    print(
+        "New wealth:",
+        info1["wealth"],
+    )
+
+    print(
+        "Bet fraction:",
+        info1["bet_fraction"],
+    )
+
+    print(
+        "New observation:",
+        obs1,
+    )
+
+    print(
+        "Reward:",
+        reward,
+    )
 
     print()
-    print("Expected observation:", expected_obs1)
-    print("Expected reward:", expected_reward)
+    print(
+        "Expected observation:",
+        expected_obs1,
+    )
+
+    print(
+        "Expected reward:",
+        expected_reward,
+    )
 
     assert np.isclose(
         obs0[0],
@@ -76,7 +111,9 @@ def main():
     assert truncated is False
 
     print()
-    print("Learned-transform environment test PASSED")
+    print(
+        "Centered learned-transform environment test PASSED"
+    )
 
 
 if __name__ == "__main__":
