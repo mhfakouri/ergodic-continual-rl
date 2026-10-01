@@ -5,7 +5,7 @@ from gymnasium import spaces
 
 class CoinTossEnv(gym.Env):
     """
-    Non-ergodic multiplicative coin-toss environment.
+    Multiplicative coin-toss environment.
 
     PPO action:
         a in [-1, 1]
@@ -16,6 +16,10 @@ class CoinTossEnv(gym.Env):
     Objectives:
         standard -> change in wealth
         log      -> change in log wealth
+
+    Optional deployment shift:
+        p_win_before -> p_win_after
+        starting at shift_step.
     """
 
     metadata = {"render_modes": []}
@@ -25,17 +29,71 @@ class CoinTossEnv(gym.Env):
         objective="standard",
         initial_wealth=100.0,
         episode_length=100,
+        p_win=0.5,
+        shift_step=None,
+        p_win_after=None,
     ):
         super().__init__()
 
-        if objective not in ("standard", "log"):
+        if objective not in (
+            "standard",
+            "log",
+        ):
             raise ValueError(
                 "objective must be 'standard' or 'log'"
             )
 
+        if not 0.0 <= p_win <= 1.0:
+            raise ValueError(
+                "p_win must be between 0 and 1"
+            )
+
+        if p_win_after is not None:
+            if not 0.0 <= p_win_after <= 1.0:
+                raise ValueError(
+                    "p_win_after must be between 0 and 1"
+                )
+
+        if shift_step is not None:
+            if shift_step < 0:
+                raise ValueError(
+                    "shift_step must be non-negative"
+                )
+
         self.objective = objective
-        self.initial_wealth = float(initial_wealth)
-        self.episode_length = int(episode_length)
+
+        self.initial_wealth = float(
+            initial_wealth
+        )
+
+        self.episode_length = int(
+            episode_length
+        )
+
+        # ----------------------------------------------------
+        # Deployment dynamics
+        # ----------------------------------------------------
+
+        self.p_win = float(
+            p_win
+        )
+
+        self.shift_step = (
+            shift_step
+        )
+
+        if p_win_after is None:
+            self.p_win_after = (
+                self.p_win
+            )
+        else:
+            self.p_win_after = float(
+                p_win_after
+            )
+
+        # ----------------------------------------------------
+        # Spaces
+        # ----------------------------------------------------
 
         self.action_space = spaces.Box(
             low=-1.0,
@@ -51,22 +109,73 @@ class CoinTossEnv(gym.Env):
             dtype=np.float32,
         )
 
-        self.wealth = self.initial_wealth
-        self.steps = 0
-
-    @staticmethod
-    def action_to_fraction(action):
-        a = float(
-            np.asarray(action).reshape(-1)[0]
+        self.wealth = (
+            self.initial_wealth
         )
 
-        a = np.clip(a, -1.0, 1.0)
+        self.steps = 0
 
-        return 0.5 * (a + 1.0)
 
-    def _observation(self):
+    # ========================================================
+    # Action conversion
+    # ========================================================
+
+    @staticmethod
+    def action_to_fraction(
+        action
+    ):
+
+        a = float(
+            np.asarray(
+                action
+            ).reshape(-1)[0]
+        )
+
+        a = np.clip(
+            a,
+            -1.0,
+            1.0,
+        )
+
+        return 0.5 * (
+            a + 1.0
+        )
+
+
+    # ========================================================
+    # Current deployment regime
+    # ========================================================
+
+    def current_p_win(
+        self
+    ):
+
+        if (
+            self.shift_step
+            is not None
+            and self.steps
+            >= self.shift_step
+        ):
+            return (
+                self.p_win_after
+            )
+
+        return self.p_win
+
+
+    # ========================================================
+    # Observation
+    # ========================================================
+
+    def _observation(
+        self
+    ):
+
         value = np.log(
-            max(self.wealth, 1e-30)
+            max(
+                self.wealth,
+                1e-30,
+            )
             / self.initial_wealth
         )
 
@@ -75,53 +184,169 @@ class CoinTossEnv(gym.Env):
             dtype=np.float32,
         )
 
-    def reset(self, seed=None, options=None):
-        super().reset(seed=seed)
 
-        self.wealth = self.initial_wealth
+    # ========================================================
+    # Reset
+    # ========================================================
+
+    def reset(
+        self,
+        seed=None,
+        options=None,
+    ):
+
+        super().reset(
+            seed=seed
+        )
+
+        self.wealth = (
+            self.initial_wealth
+        )
+
         self.steps = 0
 
         return (
             self._observation(),
-            {"wealth": float(self.wealth)},
+            {
+                "wealth":
+                    float(
+                        self.wealth
+                    ),
+
+                "p_win":
+                    self.current_p_win(),
+
+                "step":
+                    self.steps,
+            },
         )
 
-    def step(self, action):
-        fraction = self.action_to_fraction(action)
 
-        old_wealth = self.wealth
+    # ========================================================
+    # Step
+    # ========================================================
 
-        win = self.np_random.integers(0, 2)
+    def step(
+        self,
+        action,
+    ):
 
-        if win == 1:
-            multiplier = 1.0 + 0.5 * fraction
+        fraction = (
+            self.action_to_fraction(
+                action
+            )
+        )
+
+        old_wealth = (
+            self.wealth
+        )
+
+        # Probability used for THIS transition.
+        active_p_win = (
+            self.current_p_win()
+        )
+
+        # Bernoulli outcome.
+        win = (
+            self.np_random.random()
+            < active_p_win
+        )
+
+        if win:
+
+            multiplier = (
+                1.0
+                + 0.5
+                * fraction
+            )
+
         else:
-            multiplier = 1.0 - 0.4 * fraction
+
+            multiplier = (
+                1.0
+                - 0.4
+                * fraction
+            )
 
         self.wealth = max(
-            old_wealth * multiplier,
+            old_wealth
+            * multiplier,
             1e-30,
         )
 
-        if self.objective == "standard":
-            reward = self.wealth - old_wealth
-        else:
+        # ----------------------------------------------------
+        # Reward
+        # ----------------------------------------------------
+
+        if (
+            self.objective
+            == "standard"
+        ):
+
             reward = (
-                np.log(self.wealth)
-                - np.log(old_wealth)
+                self.wealth
+                - old_wealth
+            )
+
+        else:
+
+            reward = (
+                np.log(
+                    self.wealth
+                )
+                - np.log(
+                    old_wealth
+                )
             )
 
         self.steps += 1
 
         terminated = False
+
         truncated = (
-            self.steps >= self.episode_length
+            self.steps
+            >= self.episode_length
         )
+
+        info = {
+            "wealth":
+                float(
+                    self.wealth
+                ),
+
+            "bet_fraction":
+                fraction,
+
+            "p_win":
+                active_p_win,
+
+            "win":
+                bool(
+                    win
+                ),
+
+            "step":
+                self.steps,
+
+            "regime":
+                (
+                    "post-shift"
+                    if (
+                        self.shift_step
+                        is not None
+                        and self.steps
+                        > self.shift_step
+                    )
+                    else "pre-shift"
+                ),
+        }
 
         return (
             self._observation(),
-            float(reward),
+            float(
+                reward
+            ),
             terminated,
             truncated,
-            {"wealth": float(self.wealth)},
+            info,
         )
