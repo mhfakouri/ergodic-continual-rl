@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial" fill="#222">
+<text x="450" y="32" text-anchor="middle" font-size="22" font-weight="600">Baseline: long-run growth vs. typical outcome</text>
+<line x1="90" y1="430" x2="865" y2="430" stroke="#444"/>
+<line x1="90" y1="65" x2="90" y2="430" stroke="#444"/>
+<line x1="741.4" y1="65" x2="741.4" y2="430" stroke="#999" stroke-dasharray="5 5"/>
+<circle cx="358.0" cy="329.2" r="6" fill="#4e79a7"/>
+<text x="367.0" y="319.2" font-size="14">Standard PPO</text><circle cx="798.1" cy="82.5" r="6" fill="#4e79a7"/>
+<text x="807.1" y="72.5" font-size="14">Log PPO</text><circle cx="806.9" cy="84.8" r="6" fill="#4e79a7"/>
+<text x="815.9" y="70.8" font-size="14">Learned PPO</text><circle cx="811.4" cy="91.3" r="6" fill="#4e79a7"/>
+<text x="820.4" y="109.3" font-size="14">Analytical F=0.25</text><circle cx="150.5" cy="416.0" r="6" fill="#4e79a7"/>
+<text x="159.5" y="406.0" font-size="14">All-in F=1</text>
+<text x="477.5" y="482" text-anchor="middle" font-size="15">Mean log growth per step</text>
+<text x="20" y="247.5" text-anchor="middle" transform="rotate(-90 20 247.5)" font-size="15">Median final wealth (log scale)</text>
+</g></svg>
