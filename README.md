@@ -2,7 +2,7 @@
 
 A compact, modernized study of **ergodicity-aware reinforcement learning**, learned reward transformations, and adaptation under a deployment-time change in dynamics.
 
-The project compares conventional PPO with log-transformed and learned-transform PPO on a multiplicative coin-toss process, then introduces a hidden shift in (p(\text{win})) to expose the gap between a good frozen policy and a genuinely adaptive one.
+The project compares conventional PPO with log-transformed and learned-transform PPO on a multiplicative coin-toss process, then introduces a hidden shift in $p(\text{win})$ to expose the gap between a good frozen policy and a genuinely adaptive one.
 
 ## 1. Core question
 
@@ -11,26 +11,26 @@ The project compares conventional PPO with log-transformed and learned-transform
 The project has three layers:
 
 1. **Ergodicity-aware objective** — compare standard, log, and learned-transform PPO.
-2. **Deployment shift** — change (p(\text{win})) during the episode without retraining.
+2. **Deployment shift** — change $p(\text{win})$ during the episode without retraining.
 3. **Online adaptation** — estimate the new regime online and adjust the bet fraction.
 
 ---
 
 ## 2. Environment
 
-At each step the agent chooses a bet fraction (F\in[0,1]).
+At each step the agent chooses a bet fraction $F\in[0,1]$.
 
-- Win multiplier: (1+0.5F)
-- Loss multiplier: (1-0.4F)
-- Initial wealth: (W_0=100)
+- Win multiplier: $1+0.5F$
+- Loss multiplier: $1-0.4F$
+- Initial wealth: $W_0=100$
 - Episode length: 100 steps
-- PPO action space: normalized to ([-1,1]), then mapped to (F\in[0,1])
+- PPO action space: normalized to $[-1,1]$, then mapped to $F\in[0,1]$
 
-For the stationary case with (p(\text{win})=0.5), the analytical log-growth optimum is
+For the stationary case with $p(\text{win})=0.5$, the analytical log-growth optimum is
 
-[
+$
 F^*=0.25.
-]
+$
 
 The learned ergodicity transform is estimated from trajectory data using a LOWESS estimate of local increment variance and numerical integration of its inverse square root.
 
@@ -45,10 +45,10 @@ All policies are evaluated on the **same 5,000 random trajectories**.
 | Standard PPO | 700.85 | 2.49 | -0.03414 | 0.6516 | 0.8091 |
 | Log PPO | 231.40 | 218.43 | 0.00505 | 0.1900 | 0.2098 |
 | Learned-transform PPO | 267.34 | 209.64 | 0.00583 | 0.2234 | 0.2242 |
-| Analytical (F=0.25) | 348.58 | 186.10 | 0.00623 | 0.3126 | — |
-| All-in (F=1) | 5668.86 | 0.52 | -0.05262 | 0.8608 | — |
+| Analytical $F=0.25$ | 348.58 | 186.10 | 0.00623 | 0.3126 | — |
+| All-in $F=1$ | 5668.86 | 0.52 | -0.05262 | 0.8608 | — |
 
-At (W=100):
+At $W=100$:
 
 | Policy | Bet fraction |
 |---|---:|
@@ -59,7 +59,7 @@ At (W=100):
 
 The learned transform is nearly identical in shape to the logarithm:
 
-- correlation with (\log(x)): **0.999984**
+- correlation with $\log(x)$: **0.999984**
 - monotonicity: **passed**
 - fast interpolation normalized max error: **1.45×10⁻⁵**
 
@@ -81,15 +81,15 @@ The learned transform is nearly identical in shape to the logarithm:
 
 The environment is changed during evaluation only:
 
-- steps 1–50: (p(\text{win})=0.50)
-- steps 51–100: (p(\text{win})=0.47)
+- steps 1–50: $p(\text{win})=0.50$
+- steps 51–100: $p(\text{win})=0.47$
 - no PPO retraining
 
 The analytical log-optimal action changes from
 
-[
+$
 F^*=0.25 \quad\rightarrow\quad F^*=0.115.
-]
+$
 
 ### Frozen-policy results
 
@@ -98,7 +98,7 @@ F^*=0.25 \quad\rightarrow\quad F^*=0.115.
 | Standard PPO frozen | -0.04429 | 0.88 | 0.8284 | 0.8047 |
 | Log PPO frozen | 0.00257 | 187.76 | 0.2201 | 0.2084 |
 | Learned-transform PPO frozen | 0.00307 | 171.63 | 0.2309 | 0.2317 |
-| Frozen (F=0.25) | 0.00324 | 148.88 | — | — |
+| Frozen $F=0.25$ | 0.00324 | 148.88 | — | — |
 | Oracle regime-aware | 0.00407 | 150.81 | 0.2500 | 0.1150 |
 
 ![Deployment shift log growth](figures/deployment_shift_log_growth.svg)
@@ -109,15 +109,15 @@ F^*=0.25 \quad\rightarrow\quad F^*=0.115.
 
 ## 5. Online adaptation
 
-The online estimator uses recent binary outcomes to estimate (\hat p), then maps that estimate to the analytical log-optimal fraction
+The online estimator uses recent binary outcomes to estimate $\hat p$, then maps that estimate to the analytical log-optimal fraction
 
 [
-F^*(\hat p)=\mathrm{clip}(4.5\hat p-2,0,1).
+F^*$\hat p$=\mathrm{clip}(4.5\hat p-2,0,1).
 ]
 
 ### Naive rolling estimator
 
-A short unregularized rolling window correctly detects the shift, but noise in (\hat p) is amplified by the nonlinear action mapping. The result is over-aggressive betting and negative mean log growth:
+A short unregularized rolling window correctly detects the shift, but noise in $\hat p$ is amplified by the nonlinear action mapping. The result is over-aggressive betting and negative mean log growth:
 
 - mean log growth: **-0.00623**
 
@@ -217,8 +217,8 @@ This is a **modernized mathematical reproduction and small extension**, not a li
 
 Notable implementation choices:
 
-- the standard baseline uses the physically transparent wealth increment (W_{t+1}-W_t);
-- PPO actions are normalized to ([-1,1]) before mapping to (F\in[0,1]);
+- the standard baseline uses the physically transparent wealth increment $W_{t+1}-W_t$;
+- PPO actions are normalized to $[-1,1]$ before mapping to $F\in[0,1]$;
 - the learned transformation is precomputed on a logarithmic grid and interpolated during PPO training;
 - deployment-shift evaluations use common random numbers for fair policy comparisons.
 
