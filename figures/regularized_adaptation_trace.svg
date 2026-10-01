@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="470" viewBox="0 0 900 470">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial" fill="#222">
+<text x="450" y="30" text-anchor="middle" font-size="22" font-weight="600">Regularized online adaptation trace</text>
+<line x1="80" y1="405" x2="870" y2="405" stroke="#444"/>
+<line x1="80" y1="60" x2="80" y2="405" stroke="#444"/>
+<line x1="471.0" y1="60" x2="471.0" y2="405" stroke="#999" stroke-dasharray="5 5"/>
+<polyline points="80.0,98.3 231.6,98.3 391.2,98.3 471.0,98.3 510.9,121.3 550.8,121.3 630.6,121.3 710.4,121.3 870.0,121.3" fill="none" stroke="#e15759" stroke-width="3"/>
+<polyline points="80.0,98.3 231.6,98.3 391.2,97.8 471.0,98.0 510.9,99.4 550.8,101.4 630.6,105.3 710.4,105.9 870.0,105.5" fill="none" stroke="#59a14f" stroke-width="3"/>
+<polyline points="80.0,290.0 231.6,290.0 391.2,283.8 471.0,284.9 510.9,291.5 550.8,299.0 630.6,314.9 710.4,317.2 870.0,315.9" fill="none" stroke="#4e79a7" stroke-width="3"/>
+<text x="655" y="75" font-size="14" fill="#e15759">true p(win)</text>
+<text x="655" y="96" font-size="14" fill="#59a14f">regularized p-hat</text>
+<text x="655" y="117" font-size="14" fill="#4e79a7">mean bet fraction</text>
+<text x="475" y="452" text-anchor="middle" font-size="15">Episode step</text>
+<text x="18" y="232.5" text-anchor="middle" transform="rotate(-90 18 232.5)" font-size="15">Probability / fraction</text>
+</g></svg>
